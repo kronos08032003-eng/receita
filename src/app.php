@@ -90,7 +90,7 @@ $app->put('/categorias/{id}', function ($request, $response, $args) use (&$categ
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
  
-    // Atualiza a missão na posição encontrada
+    // Atualiza a missão na     posição encontrada
     $categorias[$indiceEncontrado] = [
         "id"      => $id,
         "nome"    => $body['nome'],
