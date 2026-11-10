@@ -29,10 +29,10 @@ $app->get('/categorias/{id}', function ($request, $response, $args) use ($catego
  
     $id = $args['id'];
  
-    foreach ($categorias as $categorias) {
-        if ($categorias['id'] == $id) {
+    foreach ($categorias as $categoria) {
+        if ($categoria['id'] == $id) {
  
-            $response->getBody()->write(json_encode($categorias));
+            $response->getBody()->write(json_encode($categoria));
  
             return $response
  
