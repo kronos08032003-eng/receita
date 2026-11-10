@@ -1,6 +1,6 @@
 <?php
  
-require __DIR__ . '/../vendor/autoload.php';
+require_once(dirname(__FILE__) . "/../vendor/autoload.php");
  
 use Slim\Factory\AppFactory;
  
@@ -8,10 +8,30 @@ $app = AppFactory::create();
 $app->addBodyParsingMiddleware();
  
 $categorias = [
-    ['id' => 1, 'nome' => 'Salário', 'tipo' => 'receita'],
-    ['id' => 2, 'nome' => 'Alimentação', 'tipo' => 'despesa'],
-    ['id' => 3, 'nome' => 'Transporte', 'tipo' => 'despesa']
+    ['id' => 1, 'nome' => 'Sputnik 1', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 2, 'nome' => 'Apollo 8', 'ano' => 1968, 'agencia' => "NASA", 'status' => 'Em andamento'],
+    ['id' => 3, 'nome' => 'Apollo 10', 'ano' => 1969, 'agencia' => "NASA", 'status' => 'Planejada'],
+    ['id' => 4, 'nome' => 'Apollo 11', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 5, 'nome' => 'Apollo 13', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 6, 'nome' => 'Gemini 4', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 7, 'nome' => 'Mercury-Atlas 6', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 8, 'nome' => 'Voyager 1', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 9, 'nome' => 'Voyager 2', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 10, 'nome' => 'Viking 1', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 11, 'nome' => 'Viking 2', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 12, 'nome' => 'Mariner 4', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 13, 'nome' => 'Pioneer 10', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 14, 'nome' => 'Skylab', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 15, 'nome' => 'Space Shuttle Columbia', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 16, 'nome' => 'Cassini-Huygens', 'ano' => 1967, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 17, 'nome' => 'STS-1', 'ano' => 1983, 'agencia' => "NASA", 'status' => 'Planejada'],
+    ['id' => 18, 'nome' => 'STS-41-D', 'ano' => 1984, 'agencia' => "NASA", 'status' => 'Concluída'],
+    ['id' => 19, 'nome' => 'STS-51-B', 'ano' => 1985, 'agencia' => "NASA", 'status' => 'Em andamento'],
+    ['id' => 20, 'nome' => 'Voyager 2 Encounter', 'ano' => 1986, 'agencia' => "NASA", 'status' => 'Planejada'],
 ];
+ 
+ 
+ 
  
 $app->get('/categorias', function ($request, $response) use ($categorias) {
  
@@ -24,48 +44,64 @@ $app->get('/categorias', function ($request, $response) use ($categorias) {
         ->withStatus(200);
  
 });
-
-$app->get('/categorias/{id}', function ($request, $response, $args) use ($categorias) {
  
-    $id = $args['id'];
+$app->get('/categoria/{id}', function ($request, $response, $args) use ($categorias) {
+    // 1. Converte o ID recebido para inteiro
+    $id = (int)$args['id']; 
  
+    // 2. Procura a categoria correta dentro da lista
+    $encontrado = null;
     foreach ($categorias as $categoria) {
-        if ($categoria['id'] == $id) {
- 
-            $response->getBody()->write(json_encode($categoria));
- 
-            return $response
- 
-                ->withHeader('Content-Type', 'application/json')
- 
-                ->withStatus(200);
+        if ($categoria['id'] === $id) {
+            $encontrado = $categoria;
+            break;
         }
     }
  
+    // 3. Se encontrou, retorna os dados da categoria
+    if ($encontrado !== null) {
+        $response->getBody()->write(json_encode($encontrado));
+        return $response
+            ->withHeader('Content-Type', 'application/json')
+            ->withStatus(200);
+    }
+ 
+    // 4. Se não encontrou, retorna 404
     $response->getBody()->write(json_encode([
-        'erro' => 'Produto não encontrado'
+        'erro' => 'Categoria não encontrada'
     ]));
  
     return $response
- 
         ->withHeader('Content-Type', 'application/json')
- 
         ->withStatus(404);
- 
 });
- 
 $app->post('/categorias', function ($request, $response) use (&$categorias) {
-    $dados = $request->getParsedBody();
-    $novaCategoria = [
-        'id' => count($categorias) + 1,
-        'nome' => $dados['nome'],
-        'pontos' => $dados['pontos']
+    $body = $request->getParsedBody();
+    
+    // Validação simples de campos obrigatórios
+    if (empty($body['nome']) || empty($body['ano']) || empty($body['agencia']) || empty($body['status'])) {
+        $response->getBody()->write(json_encode(["erro" => "Campos obrigatórios ausentes"]));
+        return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+    }
+ 
+    // Descobre o próximo ID baseado no maior ID existente no array
+    $proximoId = $categorias ? max(array_column($categorias, 'id')) + 1 : 1;
+ 
+    $nova = [
+        "id"      => $proximoId,
+        "nome"    => $body['nome'],
+        "ano"     => (int) $body['ano'],
+        "agencia" => $body['agencia'],
+        "status"  => $body['status'],
     ];
-    $categorias[] = $novaCategoria;
-    $response->getBody()->write(json_encode($novaCategoria));
+    
+    $categorias[] = $nova; // Adiciona no array
+ 
+    $response->getBody()->write(json_encode($nova));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(201);
 });
-
+ 
+// PUT /categorias/id/{id}
 $app->put('/categorias/{id}', function ($request, $response, $args) use (&$categorias) {
     $id = (int) $args['id'];
     $body = $request->getParsedBody();
@@ -85,29 +121,32 @@ $app->put('/categorias/{id}', function ($request, $response, $args) use (&$categ
     }
  
     // Validação de campos obrigatórios para a atualização
-    if (empty($body['nome']) || empty($body['tipo'])) {
+    if (empty($body['nome']) || empty($body['ano']) || empty($body['agencia']) || empty($body['status'])) {
         $response->getBody()->write(json_encode(["erro" => "Campos obrigatórios ausentes"]));
         return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
     }
  
-    // Atualiza a missão na     posição encontrada
+    // Atualiza a categoria na posição encontrada
     $categorias[$indiceEncontrado] = [
         "id"      => $id,
         "nome"    => $body['nome'],
-        "tipo"     => (int) $body['tipo'],
+        "ano"     => (int) $body['ano'],
+        "agencia" => $body['agencia'],
+        "status"  => $body['status'],
     ];
  
     $response->getBody()->write(json_encode($categorias[$indiceEncontrado]));
     return $response->withHeader('Content-Type', 'application/json')->withStatus(200);
 });
-
+ 
+// DELETE /categorias/{id}
 $app->delete('/categorias/{id}', function ($request, $response, $args) use (&$categorias) {
     $id = (int) $args['id'];
     
     // Busca o índice do elemento para exclusão
     $indiceEncontrado = null;
     foreach ($categorias as $key => $categoria) {
-        if ($categorias['id'] === $id) {
+        if ($categoria['id'] === $id) {
             $indiceEncontrado = $key;
             break;
         }
@@ -119,8 +158,10 @@ $app->delete('/categorias/{id}', function ($request, $response, $args) use (&$ca
     }
  
     // Remove do array na memória
-    unset($categoria[$indiceEncontrado]);
+    unset($categorias[$indiceEncontrado]);
  
     // Retorna status 204 No Content (padrão HTTP para deleções bem-sucedidas)
     return $response->withStatus(204);
- });
+});
+
+return $app;
